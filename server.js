@@ -23,7 +23,7 @@ app.use((err, req, res, next) => {
 
 // CORS
 const corsOptions = {
-  origin: ['https://blog.daviddiener.de'],
+  origin: ['https://blog.daviddiener.de', 'http://localhost:8080'],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 app.use(cors(corsOptions))

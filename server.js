@@ -1,7 +1,6 @@
 import express from 'express'
 import cors from 'cors'
 import api from 'api'
-import https from 'https'
 
 const app = express();
 
@@ -33,19 +32,40 @@ app.get('/servers', (req, res) => {
     const sdk = api('@render-api/v1.0#1bmwdfld2bezs7');
     sdk.auth(process.env.RENDER_TOKEN);
     sdk.getServices({limit: '20'})
-    .then(({ data }) => {
-        console.log(JSON.parse(data))
+    .then(({ data: serviceData }) => {        
         const myServers = []
-        JSON.parse(data).forEach(element => {
-            myServers.push({
-                name: element['service']['name'],
-                suspended: element['service']['suspended'],
-                updatedAt: element['service']['updatedAt']
+        let counter = 0
+
+        var buildServerList = new Promise((resolve, reject) => {
+            serviceData.forEach(element => {
+                sdk.getDeploys({limit: '1', serviceId: element['service']['id']})
+                .then(({ data: deployData }) => {
+                    myServers.push({
+                        id: element['service']['id'],
+                        status: deployData[0]['deploy']['status'],
+                        name: element['service']['name'],
+                        suspended: element['service']['suspended'],
+                        updatedAt: element['service']['updatedAt'],
+                        region: element['service']['serviceDetails']['region'],
+                    })
+
+                    // resolve once the last server has their status assigned
+                    counter++
+                    if (counter === serviceData.length) resolve();
+                })
+                .catch(err => {
+                    console.log('Error ' + err)
+                    console.error(err)
+                })  
             })
         });
-        res.json(myServers)
+
+        buildServerList.then(() => res.json(myServers));
     })
-    .catch(err => res.send(err));
+    .catch(err => {
+        console.log('Error ' + err)
+        res.send(err)
+    })
 });
 
 //  ************ Spin up ********************

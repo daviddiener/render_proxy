@@ -33,7 +33,18 @@ app.get('/servers', (req, res) => {
     const sdk = api('@render-api/v1.0#1bmwdfld2bezs7');
     sdk.auth(process.env.RENDER_TOKEN);
     sdk.getServices({limit: '20'})
-    .then(({ data }) => res.json({scoreList: data}))
+    .then(({ data }) => {
+        console.log(JSON.parse(data))
+        const myServers = []
+        JSON.parse(data).forEach(element => {
+            myServers.push({
+                name: element['service']['name'],
+                suspended: element['service']['suspended'],
+                updatedAt: element['service']['updatedAt']
+            })
+        });
+        res.json(myServers)
+    })
     .catch(err => res.send(err));
 });
 
